@@ -4,12 +4,6 @@ class InputsController < ApplicationController
     @input = Input.find_or_create_by(id: params[:id])
     @input.update_attributes(input_params)
 
-    if @input.input_type == 'select' || @input.input_type == 'select1'
-      @input.update_attribute(:options, params[:options].reject(&:empty?).uniq)
-    else
-      @input.update_attribute(:options, [])
-    end
-
     render json: @input
   end
 
