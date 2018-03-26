@@ -134,7 +134,9 @@
   <script type="text/javascript">
     PT.input_types = <%= raw @input_types %>;
     PT.getSurvey("<%= @survey.id %>");
-    $(document).on("mouseup", ".jump-to-expand", function(event){
+    $(document).on("click", ".jump-to-expand", function(event){
+      event.preventDefault();
+      event.stopPropagation();
       $(this).parent().find(".jump-to-content").toggle(300);
     });
   </script>
