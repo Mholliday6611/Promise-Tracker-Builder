@@ -1,9 +1,77 @@
 <div class="container">
   Fill out Survey page
+  <div>
+  	<h1 data-bind="text: title"></h1>
+  	<div data-bind="foreach: inputs">
+  		<h4 data-bind="text: label"></h4>
+  		<div data-bind="if: input_type=='text'">
+  			<textarea data-bind="value: $parent.surveyAnswers[id]" type="textarea"></textarea>
+  		</div>
+  		<div data-bind="if: input_type=='select1'">
+  			<select data-bind="foreach: options, value: $parent.surveyAnswers[id]">
+  				<option data-bind="text: $data">
+  				</option>
+  			</select>
+  		</div>
+  		<div data-bind="if: input_type=='image'">
+  			<input fata-bind="value: $parent.surveyAnswers[id]" type="file" accept="image/*" />
+  		</div>
+  		<div data-bind="if: input_type=='location'">
+  			<div data-bind="style:{width:'300px',height:'300px'},map: $parent.myMap"></div>
+  		</div>
+  	</div>
+  	<button data-bind="click: result">Click here</button>
+  </div>
 </div>
 
 <script type="text/javascript">
-  PT.retrieveSurveyDefinition(<%= @code %>, function(){
+  PT.retrieveSurveyDefinition(<%= @code %>, function(data){
+  	//Data to send out
+  	var surveyAnswers ={}
+  	for(i=0;i<data.inputs.length;i++){
+  		surveyAnswers[data.inputs[i].id] = ko.observable('Not Answered')
+  	}
 
+  	navigator.geolocation.getCurrentPosition(
+		function(position){
+		 	var currentPosition =  ko.observable({
+		 		 	lat:ko.observable(position.coords.latitude), 
+		 		 	lng:ko.observable(position.coords.longitude)
+		 		 })
+
+		 	var viewModel = {
+		  		title : data.title,
+		  		inputs : data.inputs,
+		  		surveyAnswers : surveyAnswers,
+		  		result: function(){
+		  			var x = ko.toJS(this)
+		  			console.log(x)
+		  		},
+		  		myMap : currentPosition
+		  	}
+
+			ko.bindingHandlers.map = {
+		  		init: function(element, valueAccessor){
+		  			var mapObj = ko.utils.unwrapObservable(valueAccessor());
+		  			var latLng = new google.maps.LatLng(
+		  				ko.utils.unwrapObservable(mapObj.lat),
+		  				ko.utils.unwrapObservable(mapObj.lng))
+		  			var mapOptions = {
+		  				center: latLng,
+		  				zoom: 10,
+		  			}
+		  			mapObj.googleMap = new google.maps.Map(element, mapOptions)
+		  			mapObj.googleMap = new google.maps.Marker({position:latLng,
+		  				map:mapObj.googleMap
+		  			})
+		  		}
+		  	}
+		  	ko.applyBindings(viewModel)
+		}
+	);
+
+  	
   });
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAYrqOLLhjp7hWkDBf7NmrVxw-IPt3p-e0">
 </script>
