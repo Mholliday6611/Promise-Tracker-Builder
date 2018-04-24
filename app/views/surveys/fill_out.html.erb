@@ -50,6 +50,7 @@
 	  		inputs : data.inputs,
 	  		id: data.id,
 	  		surveyAnswers : surveyAnswers,
+
 	  		result: function(){
 	  			var x = ko.toJS(this)
 	  			var id = this.id
@@ -69,14 +70,25 @@
 	  				  	console.info(returnedData)   
 	  				}})
 	  		},
+
 	  		currentQuestion: ko.observable(0),
+
 	  		next: function(){
 	  			var previousVal = this.currentQuestion();
-	  			this.currentQuestion(previousVal + 1)
+
+	  			if(previousVal == this.inputs.length-1){
+	  				return
+	  			}else{
+	  				this.currentQuestion(previousVal + 1)
+	  			}
 	  		},
 	  		previous: function(){
 	  			var previousVal = this.currentQuestion();
-	  			this.currentQuestion(previousVal - 1)
+	  			if(previousVal == 0){
+	  				return
+	  			}else{
+	  				this.currentQuestion(previousVal - 1)
+	  			}
 	  		},
 	  		position : currentPosition
 	  	}
@@ -104,12 +116,11 @@
 		  			})
 		  		}
 		  	}
-		    ko.applyBindings(viewModel)
+		    
 		}
 	);
 
-
-
+	ko.applyBindings(viewModel)
   	
   });
 </script>
