@@ -2,42 +2,53 @@
   Fill out Survey page
   <div>
   	<h1 data-bind="text: title"></h1>
-  	<div data-bind="foreach: inputs">
-  		<div data-bind="style: { opacity: $parent.currentQuestion()==$index() ? 1 : 0.5 }">
-	  		<h4 data-bind="text: label"></h4>
-	  		<div data-bind="if: input_type=='text'">
-	  			<textarea data-bind="value: $parent.surveyAnswers[id]" type="textarea"></textarea>
-	  		</div>
 
-	  		<div data-bind="if: input_type=='select1'">
-	  			<select data-bind="foreach: options, value: $parent.surveyAnswers[id]">
-	  				<option data-bind="text: $data">
-	  				</option>
-	  			</select>
-	  		</div>
+  		<div id="questionContainer" >
+		  	<div data-bind="foreach: inputs">
+		  		<div class="surveyQuestion" data-bind=" style: { opacity: $parent.currentQuestion()==$index() ? 1 : 0.3 }, attr: { id:$index()}">
+			  		<h4 data-bind="text: label"></h4>
+			  		<div data-bind="if: input_type=='text'">
+			  			<textarea data-bind="value: $parent.surveyAnswers[$index()].value, event:{change: $parent.next}" type="textarea"></textarea>
+			  		</div>
 
-	  		<div data-bind="if: input_type=='image'">
-	  			<input fata-bind="value: $parent.surveyAnswers[id]" type="file" accept="image/*" />
-	  		</div>
+			  		<div data-bind="if: input_type=='select1'">
+			  			<select data-bind="foreach: options, value: $parent.surveyAnswers[$index()].value, event:{change: $parent.next}">
+			  				<option data-bind="text: $data">
+			  				</option>
+			  			</select>
+			  		</div>
 
-	  		<div data-bind="if: input_type=='location'">
-	  			<div data-bind="style:{width:'300px',height:'300px'},map: $parent.position"></div>
-	  		</div>
+			  		<div data-bind="if: input_type=='image'">
+			  			<input data-bind="file: $parent.surveyAnswers[$index()].value" type="file" accept="image/*" />
+			  		</div>
+
+			  		<div data-bind="if: input_type=='location'">
+			  			<div data-bind="style:{width:'300px',height:'300px'},map: $parent.position"></div>
+			  		</div>
+			  	</div>
+		  	</div>
+	  		<button data-bind="click: result">Click here</button>
 	  	</div>
-  	</div>
-  	<button data-bind="click: result">Click here</button>
-  	<button data-bind="click: previous">^</button>
-  	<button data-bind="click: next">v</button>
+
+  	<div class="navigation">
+	  	<button data-bind="click: previous">^</button>
+	  	<button data-bind="click: next">v</button>
+	</div>
+
   </div>
 </div>
 
 <script type="text/javascript">
   PT.retrieveSurveyDefinition(<%= @code %>, function(data){
   	//Data to send out
-  	console.log(data)
-  	var surveyAnswers ={}
+
+  	var surveyAnswers =[]
   	for(i=0;i<data.inputs.length;i++){
-  		surveyAnswers[data.inputs[i].id] = ko.observable('Not Answered')
+  		surveyAnswers.push({
+  		  	id: data.inputs[i].id,
+  		  	value : ko.observable('Not Answered'),
+  		  	input_type: data.inputs[i].input_type
+  		  })
   	}
 
   	var currentPosition = ko.observable({
@@ -52,20 +63,25 @@
 	  		surveyAnswers : surveyAnswers,
 
 	  		result: function(){
-	  			var x = ko.toJS(this)
 	  			var id = this.id
-	  			var answers = []
-	  			for(var i in x.surveyAnswers){
-	  				answers.push(x.surveyAnswers[i])
+	  			var answers = ko.toJS(this.surveyAnswers)
+	  			var data = {
+	  				installation_id:"",
+	  				timestamp:"",
+	  				locationStamp: {
+	  					lat:"",
+	  					lon:""
+	  				},
+	  				survey_id: id,
+	  				answers: answers
 	  			}
-	  			var data = {survey_id: id,answers: answers}
 	  			console.log(data)
 	  			$.ajax({
 	  				url: "http://dev.aggregate.promisetracker.org/responses",
 	  				type: 'post', 
-	  				data: data,
-	  				headers: { Authorization : '85823f6d6a9167b1ff947a18b176c09a'},
+	  				data: {response:JSON.stringify(data)},
 	  				dataType: 'json',
+	  				headers: { Authorization : '85823f6d6a9167b1ff947a18b176c09a'},
 	  				success : function(returnedData) {
 	  				  	console.info(returnedData)   
 	  				}})
@@ -81,6 +97,7 @@
 	  			}else{
 	  				this.currentQuestion(previousVal + 1)
 	  			}
+	  			window.location.hash = "#"+this.currentQuestion()
 	  		},
 	  		previous: function(){
 	  			var previousVal = this.currentQuestion();
@@ -89,38 +106,83 @@
 	  			}else{
 	  				this.currentQuestion(previousVal - 1)
 	  			}
+	  			window.location.hash = "#"+this.currentQuestion()
 	  		},
 	  		position : currentPosition
 	  	}
 
 	navigator.geolocation.getCurrentPosition(
 		function(position){
-		 	viewModel.position =  ko.observable({
+		 	viewModel.position({
 		 		 	lat:ko.observable(position.coords.latitude), 
 		 		 	lng:ko.observable(position.coords.longitude)
 		 		 })
-
-		 	ko.bindingHandlers.map = {
-		  		init: function(element, valueAccessor){
-		  			var mapObj = ko.utils.unwrapObservable(valueAccessor());
-		  			var latLng = new google.maps.LatLng(
-		  				ko.utils.unwrapObservable(mapObj.lat),
-		  				ko.utils.unwrapObservable(mapObj.lng))
-		  			var mapOptions = {
-		  				center: latLng,
-		  				zoom: 10,
-		  			}
-		  			mapObj.googleMap = new google.maps.Map(element, mapOptions)
-		  			mapObj.googleMap = new google.maps.Marker({position:latLng,
-		  				map:mapObj.googleMap
-		  			})
-		  		}
-		  	}
 		    
 		}
 	);
 
-	ko.applyBindings(viewModel)
+	ko.bindingHandlers.map = {
+  		init: function(element, valueAccessor,allBindingsAccessor,input){
+  			console.log(input)
+
+  			var mapObj = ko.utils.unwrapObservable(valueAccessor());
+
+  			var latLng = new google.maps.LatLng(
+  				ko.utils.unwrapObservable(mapObj.lat),
+  				ko.utils.unwrapObservable(mapObj.lng))
+
+  			var mapOptions = {
+  				center: latLng,
+  				zoom: 10,
+  			}
+
+  			mapObj.googleMap = new google.maps.Map(element, mapOptions)
+  			mapObj.marker = new google.maps.Marker({position: latLng,
+  				map: mapObj.googleMap,
+  				draggable:true,
+  				animation: google.maps.Animation.DROP
+  			})
+
+  			viewModel.marker = mapObj.marker
+  			viewModel.map = mapObj.googleMap
+
+  			google.maps.event.addListener(mapObj.marker,'dragend',function(){
+  				viewModel.marker = this
+
+  				var index = viewModel.surveyAnswers.findIndex(function(i){
+  					return i.id == input.id
+  				})
+
+  				viewModel.surveyAnswers[index].value = {
+  					lat:viewModel.marker.getPosition().lat(),
+  					lon:viewModel.marker.getPosition().lat()
+  				}
+  				console.log(viewModel)
+  			})
+  		},
+	  	update: function(element,valueAccessor,allBindingsAccessor){
+	  		var mapObj = ko.utils.unwrapObservable(allBindingsAccessor().map);
+	  		var latLng = new google.maps.LatLng(
+  				ko.utils.unwrapObservable(mapObj.lat),
+  				ko.utils.unwrapObservable(mapObj.lng))
+	  		viewModel.marker.setPosition(latLng)
+	  		viewModel.map.center = latLng
+	  		}
+  	}
+
+  	ko.applyBindings(viewModel)
+
+  	for(i=0;i<surveyAnswers.length;i++){
+  		this["waypoint"+i] = new Waypoint({
+  		 	element: document.getElementById(i),
+  		 	handler: function(){
+  		 		viewModel.currentQuestion(parseInt(this.element.id))
+  		 		console.log(viewModel.currentQuestion())
+  		 	},
+  		 	offset:'30%'
+  		 })
+  	}
+	
   	
   });
 </script>
