@@ -1,7 +1,11 @@
-.surveyQuestion {
-	height: 350px;
+.questionContainer {
+	height: 400px;
+	border: 1px solid black;
 }
-#questionContainer{
+.questionInput {
+	margin-top: 100px
+}
+#surveyContainer{
 	margin-top: 100px;
 	margin-bottom: 200px;
 }
