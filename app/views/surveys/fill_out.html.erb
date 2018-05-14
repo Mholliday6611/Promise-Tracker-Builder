@@ -108,18 +108,31 @@
 	  				headers: { Authorization : '85823f6d6a9167b1ff947a18b176c09a'},
 
 	  				success : function(returnedData) {
+	  					console.log(returnedData)
+	  					for(i=0;i< viewModel.files().length; i++){
+	  						console.log(viewModel.files()[i])
+		  				  	$.ajax({
+			  				url: "http://dev.aggregate.promisetracker.org/upload_image",
+			  				type: 'post', 
 
-	  				  	console.info(returnedData)
+			  				fileKey: "file",
+			  				data: {	
+			  						file: viewModel.files()[i].src,
+			  						filename:viewModel.files()[i].name,
+		  							id: returnedData.payload.id, 
+		  							survey_id: viewModel.id,
+		  							src: viewModel.files()[i].src, 
+		  							input_id: viewModel.files()[i].input_id,
+			  				},
 
-	  				//   	$.ajax({
-		  			// 	url: "http://dev.aggregate.promisetracker.org/upload_image",
-		  			// 	type: 'post', 
-		  			// 	data: {file:,filename:},
-		  			// 	headers: { Authorization : '85823f6d6a9167b1ff947a18b176c09a'},
-		  			// 	success : function(returnedData) {
-		  			// 	  	console.info(returnedData)   
-		  			// 	}
-		  			// })  
+			  				processData: false,
+            				contentType: false,
+			  				headers: { Authorization : '85823f6d6a9167b1ff947a18b176c09a'},
+			  				success : function(response) {
+			  				  	console.info(response)   
+			  				}
+			  			})
+	  				}  
 	  			}})
 
 	  		},    
@@ -140,8 +153,9 @@
 
 		          // Closure to capture the file information.
 		          reader.onload = (function(theFile) {
-		              return function(e) {                             
-		                  viewModel.files.push(new FileModel(escape(theFile.name),e.target.result));
+
+		              return function(e) {                         
+		                  viewModel.files.push(new FileModel(escape(theFile.name),e.target.result,elemet.id));
 		              };                            
 		          })(f);
 		          // Read in the image file as a data URL.
@@ -190,10 +204,12 @@
 			}
 	  	}
 
-	var FileModel= function (name, src) {
+	var FileModel= function (name, src, id) {
 	    var self = this;
 	    this.name = name;
-	    this.src= src ;
+	    this.src = src ;
+	    this.input_id = id;
+	    this.survey_id = viewModel.id;
 	};
 
 	navigator.geolocation.getCurrentPosition(
