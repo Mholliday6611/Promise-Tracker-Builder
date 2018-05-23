@@ -64,7 +64,7 @@
 <script type="text/javascript">
   PT.retrieveSurveyDefinition(<%= @code %>, function(data){
   	//Data to send out
-
+  	console.log(data)
   	var surveyAnswers =[]
   	for(i=0;i<data.inputs.length;i++){
   		surveyAnswers.push({
@@ -91,7 +91,7 @@
 	  			var answers = ko.toJS(this.surveyAnswers)
 	  			var data = {
 	  				installation_id:"",
-	  				timestamp:"",
+	  				timestamp:new Date(),
 	  				locationStamp: {
 	  					lat:"",
 	  					lon:""
@@ -101,35 +101,40 @@
 	  			}
 	  			console.log(data)
 	  			$.ajax({
-	  				url: "http://dev.aggregate.promisetracker.org/responses",
+	  				url: "http://localhost:9292/responses",
 	  				type: 'post', 
-	  				data: {response:JSON.stringify(data)},
+	  				data: {response: JSON.stringify(data)},
 	  				dataType: 'json',
-	  				headers: { Authorization : '85823f6d6a9167b1ff947a18b176c09a'},
+	  				headers: { Authorization : 'goodaccesskeycode'},
 
 	  				success : function(returnedData) {
+
 	  					console.log(returnedData)
+	  					var reader = new FileReader();
 	  					for(i=0;i< viewModel.files().length; i++){
-	  						console.log(viewModel.files()[i])
-		  				  	$.ajax({
-			  				url: "http://dev.aggregate.promisetracker.org/upload_image",
-			  				type: 'post', 
+	  						let formData = new FormData();
+	  						formData.append('file',viewModel.files()[i].file)
+	  						formData.append('id', returnedData.payload.id)
+	  						formData.append('survey_id',viewModel.id)
+	  						formData.append('input_id',viewModel.files()[i].input_id)
 
-			  				fileKey: "file",
-			  				data: {	
-			  						file: viewModel.files()[i].src,
-			  						filename:viewModel.files()[i].name,
+	  						console.log(formData)
+	  						let data = {	
+			  						file: viewModel.files()[i].file,
+
 		  							id: returnedData.payload.id, 
-		  							survey_id: viewModel.id,
-		  							src: viewModel.files()[i].src, 
+		  							survey_id: viewModel.id, 
 		  							input_id: viewModel.files()[i].input_id,
-			  				},
-
-			  				processData: false,
-            				contentType: false,
-			  				headers: { Authorization : '85823f6d6a9167b1ff947a18b176c09a'},
+			  				}
+		  				  	$.ajax({
+			  				url: "http://localhost:9292/upload_image",
+			  				type: 'post', 
+			  				data: formData,
+			  				contentType: false,
+  							processData: false,
+			  				headers: { Authorization : 'goodaccesskeycode'},
 			  				success : function(response) {
-			  				  	console.info(response)   
+			  				  	console.log(response)   
 			  				}
 			  			})
 	  				}  
@@ -143,7 +148,7 @@
 		        var files =  event.target.files;// FileList object
 		        // Loop through the FileList and render image files as thumbnails.
 		        for (var i = 0, f; f = files[i]; i++) {
-
+		          console.log(f)
 		          // Only process image files.
 		          if (!f.type.match('image.*')) {
 		            continue;
@@ -154,14 +159,13 @@
 		          // Closure to capture the file information.
 		          reader.onload = (function(theFile) {
 
-		              return function(e) {                         
-		                  viewModel.files.push(new FileModel(escape(theFile.name),e.target.result,elemet.id));
+		              return function(e) {
+		                  viewModel.files.push(new FileModel(escape(theFile.name),e.target.result,elemet.id,theFile));
 		              };                            
 		          })(f);
 		          // Read in the image file as a data URL.
 		          reader.readAsDataURL(f);
 		        }
-		        console.log(viewModel.files())
 		    },
 
 	  		currentQuestion: ko.observable(0),
@@ -204,12 +208,13 @@
 			}
 	  	}
 
-	var FileModel= function (name, src, id) {
+	var FileModel= function (name, src, id,file) {
 	    var self = this;
 	    this.name = name;
 	    this.src = src ;
 	    this.input_id = id;
 	    this.survey_id = viewModel.id;
+	    this.file = file;
 	};
 
 	navigator.geolocation.getCurrentPosition(

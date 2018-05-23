@@ -6,6 +6,7 @@ class CampaignsController < ApplicationController
   before_filter :assign_campaign_variables, except: [:index, :create, :destroy, :share, :get_stats]
 
   def index
+    puts ENV['AGGREGATOR_URL']
     @campaign = Campaign.new
     @campaigns = current_user.campaigns.select{ |c| c.title.present? }.sort_by(&:status)
   end
