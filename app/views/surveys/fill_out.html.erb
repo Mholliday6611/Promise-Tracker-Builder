@@ -51,9 +51,7 @@
   	<div class="navigation">
 	  	<button data-bind="click: previous">^</button>
 	  	<button data-bind="click: next">v</button>
-	  	<div>
-	  		<h1 class="progressTracker" data-bind="text:progress() +'/' + inputs.length"></h1>
-	  	</div>
+	  	<progress class="progressbar" data-bind='attr:{ value:progress(), max:inputs.length }'></progress>
 	</div>
 		</center>
   </div>
