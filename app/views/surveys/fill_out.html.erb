@@ -1,9 +1,9 @@
 <div class="container">
   Fill out Survey page
-  <div>
+  <div data-bind="style: {display: done()? 'none': '' }" id="surveyContainer" >
   	<h1 data-bind="text: title"></h1>
   		<center>
-  		<div id="surveyContainer" >
+  		<div>
 		  	<div data-bind="foreach: inputs">
 		  		<div class="questionContainer" data-bind=" style: { opacity: $parent.currentQuestion()==$index() ? 1 : 0.3 }, attr: { id:$index()}">
 		  			<div  data-bind=" style: { marginTop: input_type=='location' ? '' : '125px'}">
@@ -12,8 +12,21 @@
 				  			<textarea data-bind="value: $parent.surveyAnswers[$index()].value, event:{change: $parent.next}" type="textarea"></textarea>
 				  		</div>
 
+				  		<div data-bind="if: input_type=='number'">
+				  			<input data-bind="value: $parent.surveyAnswers[$index()].value, event:{change: $parent.next}" type="number"></input>
+				  		</div>
+
+				  		<div data-bind="if: input_type=='date'">
+				  			<input data-bind="value: $parent.surveyAnswers[$index()].value, event:{change: $parent.next}" type="date"></input>
+				  		</div>
+
 				  		<div data-bind="if: input_type=='select1'">
 				  			<select data-bind="optionsCaption:'---', options: options, value: $parent.surveyAnswers[$index()].value, event:{change: $parent.next}">
+				  			</select>
+				  		</div>
+
+				  		<div data-bind="if: input_type=='select'">
+				  			<select data-bind="optionsCaption:'---', options: options, multiple='true' ,value: $parent.surveyAnswers[$index()].value, event:{change: $parent.next}" multiple>
 				  			</select>
 				  		</div>
 
@@ -55,6 +68,9 @@
 	</div>
 		</center>
   </div>
+  <div data-bind="style: {display: done() ? '' : 'none' }" id="surveyContainer" >
+  	<center><h1>Thank You for filling out the survey!</h1></center>
+  </div>
 </div>
 
 <script type="text/javascript">
@@ -94,6 +110,7 @@
 	  		surveyAnswers : surveyAnswers,
 	  		address: ko.observable(),
 	  		progress: ko.observable(0),
+	  		done: ko.observable(false),
 
 	  		result: function(){
 	  			var id = this.id
@@ -147,6 +164,7 @@
 			  				}
 			  			})
 	  				}  
+	  				viewModel.done(true)
 	  			}})
 
 	  		},    
