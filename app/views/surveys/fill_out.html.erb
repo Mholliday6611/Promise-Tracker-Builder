@@ -1,34 +1,39 @@
 <div class="container">
-  Fill out Survey page
   <div data-bind="style: {display: done()? 'none': '' }" id="surveyContainer" >
-  	<h1 data-bind="text: title"></h1>
   		<center>
+  			<h1 data-bind="text: title"></h1>
   		<div>
   			<form data-bind="submit: result"> 
 		  	<div data-bind="foreach: inputs">
 		  		<div class="questionContainer" data-bind=" style: { opacity: $parent.currentQuestion()==$index() ? 1 : 0.3 }, attr: { id:$index()}">
 		  			<div  data-bind=" style: { marginTop: input_type=='location' ? '' : '125px'}">
-				  		<h4 data-bind="text: ($index() + 1) + '. ' + label"></h4>
+				  		<h3 data-bind="text: ($index() + 1) + '. ' + label"></h3>
 				  		<div data-bind="if: input_type=='text'">
-				  			<textarea data-bind="value: $parent.surveyAnswers[$index()].value, event:{change: $parent.next}, attr: {required:required?true:false}" type="textarea"></textarea>
+				  			<textarea data-bind="value: $parent.surveyAnswers[$index()].value, event:{change: $parent.checkProgress}, attr: {required:required?true:false}" type="textarea"></textarea>
 				  		</div>
 
 				  		<div data-bind="if: input_type=='number'">
-				  			<input data-bind="value: $parent.surveyAnswers[$index()].value, event:{change: $parent.next}, attr: {required:required?true:false}" type="number"></input>
+				  			<input data-bind="value: $parent.surveyAnswers[$index()].value, event:{change: $parent.checkProgress}, attr: {required:required?true:false}" type="number"></input>
 				  		</div>
 
 				  		<div data-bind="if: input_type=='date'">
-				  			<input data-bind="value: $parent.surveyAnswers[$index()].value, event:{change: $parent.next}, attr: {required:required?true:false}" type="date"></input>
+				  			<input data-bind="value: $parent.surveyAnswers[$index()].value, event:{change: $parent.checkProgress}, attr: {required:required?true:false}" type="date"></input>
 				  		</div>
 
 				  		<div data-bind="if: input_type=='select1'">
-				  			<select data-bind="optionsCaption:'---', options: options, value: $parent.surveyAnswers[$index()].value, event:{change: $parent.next}, attr: {required:required?true:false}">
-				  			</select>
+				  			<span data-bind="foreach:options" >
+				  				<label data-bind="text:$data"></label>
+				  				<input data-bind="attr:{name:$parent.id,value:$data},checked:$root.surveyAnswers[$parentContext.$index()].value" type="radio" />
+				  			</span>
+
 				  		</div>
 
 				  		<div data-bind="if: input_type=='select'">
-				  			<select data-placeholder="Choose One" data-bind="options: options, multiple='true' ,value: $parent.surveyAnswers[$index()].value, event:{change: $parent.checkProgress}, attr: {required:required?true:false}" style="width: 40%" multiple class="chosen-select">
-				  			</select>
+				  			<span data-bind="foreach:options" >
+				  			<label data-bind="text:$data"></label>
+				  			<input
+				  			data-bind="attr:{name:$parent.id,value:$data},checked:$root.surveyAnswers[$parentContext.$index()].value" type="checkbox" />
+				  			</span>
 				  		</div>
 
 				  		<div data-bind="if: input_type=='image'">
@@ -80,9 +85,15 @@
   	console.log(data)
   	var surveyAnswers =[]
   	for(i=0;i<data.inputs.length;i++){
+  		var value
+  		if(data.inputs[i].input_type == "select"){
+  			value = ko.observableArray([])
+  		}else{
+  			value = ko.observable('')
+  		}
   		surveyAnswers.push({
   		  	id: data.inputs[i].id,
-  		  	value : ko.observable(''),
+  		  	value : value,
   		  	input_type: data.inputs[i].input_type
   		  })
   	}
@@ -145,7 +156,7 @@
 	  						formData.append('survey_id',viewModel.id)
 	  						formData.append('input_id',viewModel.files()[i].input_id)
 
-	  						console.log(formData)
+	  						console.log(viewModel.files()[i].file)
 	  						let data = {	
 			  						file: viewModel.files()[i].file,
 
@@ -272,7 +283,7 @@
 
   			var mapOptions = {
   				center: latLng,
-  				zoom: 10,
+  				zoom: 16,
   			}
 
   			mapObj.googleMap = new google.maps.Map(element, mapOptions)
@@ -331,7 +342,7 @@
   		 		viewModel.currentQuestion(parseInt(this.element.id))
   		 		console.log(viewModel.currentQuestion())
   		 	},
-  		 	offset:'30%'
+  		 	offset:'15%'
   		 })
   	}
 	
